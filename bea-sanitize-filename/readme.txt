@@ -3,9 +3,9 @@ Contributors: beapi, maximeculea, momo360modena
 Donate link: http://paypal.me/BeAPI
 Tags: uploads, sanitize, media
 Requires at least: 4.0
-Requires php: 5.6
-Tested up to: 6.1
-Stable tag: 2.0.7
+Requires php: 8.0
+Tested up to: 7.0
+Stable tag: 2.0.9
 License: GPLv3 or later
 License URI: https://github.com/BeAPI/bea-sanitize-filename/blob/master/LICENSE.md
 
@@ -57,6 +57,14 @@ Yes.
 You just need to activate on each site.
 
 == Changelog ==
+
+= 2.0.9 - 02 Apr 2026 =
+- Fix invalid smart quotes in special characters list
+- Migrate tests to `wp-env` with PHPUnit unit tests only
+- Improve testing documentation and scripts
+
+= 2.0.8 - 02 Apr 2026 =
+- Add `@` character to the sanitized characters list
 
 = 2.0.7 - 20 Sept 2022 =
 - Non Latin characters in filename are handled
