@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: BEA - Sanitize Filename
-Version: 2.0.9
+Version: 2.0.10
 Plugin URI: https://github.com/BeAPI/bea-sanitize-filename
 Description: Remove all punctuation and accents from the filename of uploaded files.
 Requires at least: 4.0
@@ -33,18 +33,21 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 /**
- * Add some special chats to espace to WordPress basic list
+ * Merges extra characters into the list WordPress strips from upload file names.
  *
- * @param array $special_chars
+ * Callback for the `sanitize_file_name_chars` filter.
  *
- * @return array
+ * @param array $special_chars Characters already collected by WordPress or other callbacks.
+ * @return array Combined list of characters removed during filename sanitization.
  */
 function bea_sanitize_file_name_chars( $special_chars = array() ) {
-	// Special caracters
+	// Punctuation, symbols, and typographic quotes.
 	$special_chars = array_merge( array( '’', '‘', '”', '“', '«', '»', '‹', '›', '—', '€', '©', '@' ), $special_chars );
+
 	/**
-	 * Accentued caracters
-	 * @see   https://github.com/BeAPI/bea-sanitize-filename/issues/8
+	 * Accented Latin letters removed from the basename.
+	 *
+	 * @see https://github.com/BeAPI/bea-sanitize-filename/issues/8
 	 * @since 2.0.6
 	 */
 	$special_chars = array_merge( array( 'À', 'Á', 'Â', 'Ã', 'Ä', 'Å', 'Ç', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í', 'Î', 'Ï', 'Ò', 'Ó', 'Ô', 'Õ', 'Ö', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'à', 'á', 'â', 'ã', 'ä', 'å', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï', 'ð', 'ò', 'ó', 'ô', 'õ', 'ö', 'ù', 'ú', 'û', 'ü', 'ý', 'ÿ' ), $special_chars );
@@ -55,15 +58,16 @@ function bea_sanitize_file_name_chars( $special_chars = array() ) {
 add_filter( 'sanitize_file_name_chars', 'bea_sanitize_file_name_chars', 10, 1 );
 
 /**
- * Filters the filename by adding more rules :
- * - only lowercase
- * - replace _ by -
+ * Applies extra rules after WordPress core sanitization.
+ *
+ * - Lowercase the basename (extension unchanged).
+ * - Strip accents via `remove_accents()`.
+ * - Replace underscores with hyphens.
  *
  * @since 1.0.1
  *
- * @param string $file_name
- *
- * @return string
+ * @param string $file_name File name after `sanitize_file_name` character stripping.
+ * @return string File name with the rules above applied.
  */
 function bea_sanitize_file_name( $file_name = '' ) {
 	// Empty filename
@@ -71,22 +75,25 @@ function bea_sanitize_file_name( $file_name = '' ) {
 		return $file_name;
 	}
 
-	// get extension
-	preg_match( '/\.[^\.]+$/i', $file_name, $ext );
-
-	// No extension, go out ?
-	if ( ! isset( $ext[0] ) ) {
+	// Separate filename and extension (last segment after the final dot).
+	$extension = pathinfo( $file_name, PATHINFO_EXTENSION );
+	if ( '' === $extension ) {
 		return $file_name;
 	}
 
-	// Get only first part
-	$ext = $ext[0];
+	$suffix = '.' . $extension;
+	$suffix_length = strlen( $suffix );
 
-	// work only on the filename without extension
-	$file_name = str_replace( $ext, '', $file_name );
+	// Strip the suffix only at the end; str_replace( $suffix, '', $file_name ) would remove every occurrence.
+	if ( ! str_ends_with( $file_name, $suffix ) ) {
+		return $file_name;
+	}
+
+	$file_name = substr( $file_name, 0, -$suffix_length );
 
 	// only lowercase
 	$file_name = mb_strtolower( $file_name );
+
 	// remove accents
 	$file_name = remove_accents( $file_name );
 
@@ -94,7 +101,7 @@ function bea_sanitize_file_name( $file_name = '' ) {
 	$file_name = str_replace( '_', '-', $file_name );
 
 	// Return sanitized file name
-	return $file_name . $ext;
+	return $file_name . $suffix;
 }
 
 add_filter( 'sanitize_file_name', 'bea_sanitize_file_name', 10, 1 );
